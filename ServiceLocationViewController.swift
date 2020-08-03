@@ -9,9 +9,18 @@
 import Foundation
 import UIKit
 import MapKit
+protocol HandleMapSearch {
+    func dropPinZoomIn(placemark:MKPlacemark)
+}
 
+class ServiceLocationViewController: UIViewController, CLLocationManagerDelegate, HandleMapSearch {
+    func dropPinZoomIn(placemark: MKPlacemark) {
+        
+    }
+    
+    
 
-class ServiceLocationViewController: UIViewController, CLLocationManagerDelegate  {
+    
     
     @IBOutlet var mapView: MKMapView!
     var allServiceLocations : [ServiceLocation] = []
@@ -21,6 +30,7 @@ class ServiceLocationViewController: UIViewController, CLLocationManagerDelegate
     let serviceLocationMarker = "marker"
     let radius = CLLocationDistance(exactly: 1500.0)
     var resultSearchController:UISearchController? = nil
+    var selectedPin:MKPlacemark? = nil
    
     
     
@@ -30,9 +40,9 @@ class ServiceLocationViewController: UIViewController, CLLocationManagerDelegate
         mapView.delegate = self
         mapView.register(ServiceLocationMarkerView.self, forAnnotationViewWithReuseIdentifier: serviceLocationMarker)
         setupView()
-        let locationSearchTable = storyboard!.instantiateViewController(withIdentifier: "LocationSearchTable") as! LocationSearchTable
+        let locationSearchTable = storyboard!.instantiateViewController(withIdentifier:     "LocationSearchTable") as! LocationSearchTable
         resultSearchController = UISearchController(searchResultsController: locationSearchTable)
-        resultSearchController?.searchResultsUpdater = locationSearchTable as? UISearchResultsUpdating
+        resultSearchController?.searchResultsUpdater = locationSearchTable as UISearchResultsUpdating
         let searchBar = resultSearchController!.searchBar
         searchBar.sizeToFit()
         searchBar.placeholder = "Search for places"
@@ -41,6 +51,7 @@ class ServiceLocationViewController: UIViewController, CLLocationManagerDelegate
         resultSearchController?.dimsBackgroundDuringPresentation = true
         definesPresentationContext = true
         locationSearchTable.mapView = mapView
+        locationSearchTable.handleMapSearchDelegate = self
         
     }
     
@@ -153,23 +164,13 @@ extension ServiceLocationViewController: MKMapViewDelegate {
     }
     
 }
-
-
-// TODO - uncomment this to implement the search bar and get user gps location
-//extension ViewController : CLLocationManagerDelegate {
-//    func locationManager(manager: CLLocationManager, didChangeAuthorizationStatus status: CLAuthorizationStatus) {
-//        if status == .authorizedWhenInUse {
-//            locationManager.requestLocation()
-//        }
-//    }
-//
-//    func locationManager(manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-//        if let location = locations.first {
-//            print("location:: (location)")
-//        }
-//    }
-//
-//    func locationManager(manager: CLLocationManager, didFailWithError error: NSError) {
-//        print("error:: (error)")
-//    }
-//}
+extension ViewController: HandleMapSearch {
+    func dropPinZoomIn(placemark:MKPlacemark){
+        // cache the pin
+        let center = CLLocationCoordinate2D(latitude: placemark.coordinate.latitude, longitude: placemark.coordinate.longitude )
+        let region = MKCoordinateRegion(center: center, span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01))
+        
+        
+    //mapView.setRegion(region, animated: true)
+    }
+}
