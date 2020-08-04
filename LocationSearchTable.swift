@@ -13,9 +13,14 @@ class LocationSearchTable: UITableViewController {
     
     var handleMapSearchDelegate:HandleMapSearch? = nil
     var matchingItems: [MKMapItem] = []
-    var mapView: MKMapView?
+    var mapView: MKMapView? = nil
     var allServiceLocations : [ServiceLocation] = []
-    
+    var filteredServiceLocation : [ServiceLocation] = []
+    let searchController = UISearchController(searchResultsController: nil)
+    var isSearchBarEmpty: Bool {
+      return searchController.searchBar.text?.isEmpty ?? true
+    }
+
     func parseAddress(selectedItem:MKPlacemark) -> String {
         
         // put a space between "4" and "Melrose Place"
@@ -49,37 +54,19 @@ class LocationSearchTable: UITableViewController {
     }
 }
 
+
 extension LocationSearchTable : UISearchResultsUpdating {
     func updateSearchResults(for searchController: UISearchController) {
         guard let mapView = mapView,
             let searchBarText = searchController.searchBar.text else { return }
         
+        
+
+        
         let request = MKLocalSearch.Request()
         request.naturalLanguageQuery = searchBarText
         request.region = mapView.region
-        
-        var annotations: [CustomAnnotation] = []
-        for location in allServiceLocations {
-            
-            let type : AnnotationType
-            
-            switch location.locationType{
-            case .dorm:
-                type = AnnotationType.dorm
-            case .officebuilding:
-                type = AnnotationType.officebuilding
-            case .library:
-                type = AnnotationType.library
-            case .restaurant:
-                type = AnnotationType.restaurant
-            case .other:
-                type = AnnotationType.other
-            }
-            let annotation = CustomAnnotation(title: "\(location.locationName)", locationName: "\(location.locationType)", coordinate: CLLocationCoordinate2D(latitude: location.latitude, longitude: location.longitude), type: type)
-            annotations.append(annotation)
-        
-        }
-        
+        let search = MKLocalSearch(request: request)
         
         search.start { response, _ in
             guard let response = response else {

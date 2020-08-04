@@ -9,17 +9,12 @@
 import Foundation
 import UIKit
 import MapKit
+
 protocol HandleMapSearch {
     func dropPinZoomIn(placemark:MKPlacemark)
 }
 
-class ServiceLocationViewController: UIViewController, CLLocationManagerDelegate, HandleMapSearch {
-    func dropPinZoomIn(placemark: MKPlacemark) {
-        
-    }
-    
-    
-
+class ServiceLocationViewController: UIViewController, CLLocationManagerDelegate {
     
     
     @IBOutlet var mapView: MKMapView!
@@ -31,8 +26,7 @@ class ServiceLocationViewController: UIViewController, CLLocationManagerDelegate
     let radius = CLLocationDistance(exactly: 1500.0)
     var resultSearchController:UISearchController? = nil
     var selectedPin:MKPlacemark? = nil
-   
-    
+
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -164,13 +158,14 @@ extension ServiceLocationViewController: MKMapViewDelegate {
     }
     
 }
-extension ViewController: HandleMapSearch {
+extension ServiceLocationViewController: HandleMapSearch {
     func dropPinZoomIn(placemark:MKPlacemark){
         // cache the pin
-        let center = CLLocationCoordinate2D(latitude: placemark.coordinate.latitude, longitude: placemark.coordinate.longitude )
+    UIView.animate(withDuration: 1.5, animations: { () -> Void in
+       let center = CLLocationCoordinate2D(latitude: placemark.coordinate.latitude, longitude: placemark.coordinate.longitude )
         let region = MKCoordinateRegion(center: center, span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01))
         
-        
-    //mapView.setRegion(region, animated: true)
-    }
+        self.mapView.setRegion(region, animated: true)
+    })
+}
 }
