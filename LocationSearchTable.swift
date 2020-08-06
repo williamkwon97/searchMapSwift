@@ -23,13 +23,19 @@ class LocationSearchTable: UITableViewController, UISearchResultsUpdating {
             guard let mapView = mapView,
                 let searchBarText = searchController.searchBar.text else { return }
             
-            for item in self.mapView!.annotations    {
-                let title = item.title! as! String
-                
-                if title.hasPrefix(searchBarText) && searchBarText != ""  {
-                    matchingItems.append(item)
+            
+            matchingItems = self.mapView!.annotations.filter { annotation -> Bool in
+                if annotation.title!.range(of: searchBarText, options: .caseInsensitive) != nil {
+                    return true
                 }
+
+                if annotation.subtitle!.range(of: searchBarText, options: .caseInsensitive) != nil {
+                    return true
+                }
+
+                return false
             }
+
             self.tableView.reloadData()
         }
         
