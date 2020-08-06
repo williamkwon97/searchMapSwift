@@ -8,13 +8,14 @@
 
 import Foundation
 import UIKit
+import UIKit
 import MapKit
 
 protocol HandleMapSearch {
-    func dropPinZoomIn(placemark:MKPlacemark)
+    func dropPinZoomIn(placemark:MKAnnotation)
 }
 
-class ServiceLocationViewController: UIViewController, CLLocationManagerDelegate {
+class ServiceLocationViewController: UIViewController, CLLocationManagerDelegate, UISearchBarDelegate {
     
     
     @IBOutlet var mapView: MKMapView!
@@ -26,7 +27,9 @@ class ServiceLocationViewController: UIViewController, CLLocationManagerDelegate
     let radius = CLLocationDistance(exactly: 1500.0)
     var resultSearchController:UISearchController? = nil
     var selectedPin:MKPlacemark? = nil
+    var searchController:UISearchController! = nil
 
+    
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -34,19 +37,25 @@ class ServiceLocationViewController: UIViewController, CLLocationManagerDelegate
         mapView.delegate = self
         mapView.register(ServiceLocationMarkerView.self, forAnnotationViewWithReuseIdentifier: serviceLocationMarker)
         setupView()
+        
         let locationSearchTable = storyboard!.instantiateViewController(withIdentifier:     "LocationSearchTable") as! LocationSearchTable
+        
         resultSearchController = UISearchController(searchResultsController: locationSearchTable)
         resultSearchController?.searchResultsUpdater = locationSearchTable as UISearchResultsUpdating
+        resultSearchController?.hidesNavigationBarDuringPresentation = false
+        resultSearchController?.dimsBackgroundDuringPresentation = true
+        
         let searchBar = resultSearchController!.searchBar
         searchBar.sizeToFit()
         searchBar.placeholder = "Search for places"
         navigationItem.titleView = resultSearchController?.searchBar
-        resultSearchController?.hidesNavigationBarDuringPresentation = false
-        resultSearchController?.dimsBackgroundDuringPresentation = true
         definesPresentationContext = true
+        searchBar.delegate = self
+        
         locationSearchTable.mapView = mapView
         locationSearchTable.handleMapSearchDelegate = self
         
+        addMapTrackingButton()
     }
     
     func setupView(){
@@ -71,6 +80,7 @@ class ServiceLocationViewController: UIViewController, CLLocationManagerDelegate
         for location in allServiceLocations {
             
             let type : AnnotationType
+           
             
             switch location.locationType{
             case .dorm:
@@ -84,7 +94,7 @@ class ServiceLocationViewController: UIViewController, CLLocationManagerDelegate
             case .other:
                 type = AnnotationType.other
             }
-            let annotation = CustomAnnotation(title: "\(location.locationName)", locationName: "\(location.locationType)", coordinate: CLLocationCoordinate2D(latitude: location.latitude, longitude: location.longitude), type: type)
+            let annotation = CustomAnnotation(title: "\(location.locationName)", locationName: "\(location.locationType) " , coordinate: CLLocationCoordinate2D(latitude: location.latitude, longitude: location.longitude), type: type)
             annotations.append(annotation)
         }
         let centerLocation = self.averageCoordinate()
@@ -114,6 +124,20 @@ class ServiceLocationViewController: UIViewController, CLLocationManagerDelegate
             averageLatitude = defaultCenterLatitude
         }
         return CLLocationCoordinate2D(latitude: averageLatitude, longitude: averageLongitude)
+    }
+    
+    func addMapTrackingButton(){
+        let button = UIButton(frame: CGRect(x: 390, y:0 , width: 25, height: 50))
+        button.backgroundColor = .green
+        button.setTitle("Test Button", for: [])
+        button.addTarget(self, action: #selector(centerMapOnUserButtonClicked), for: .touchUpInside)
+        self.mapView.addSubview(button)
+    }
+    
+    @objc func centerMapOnUserButtonClicked() {
+        let span = MKCoordinateSpan(latitudeDelta: 0.017, longitudeDelta: 0.017)
+        let region = MKCoordinateRegion(center: averageCoordinate(), span: span)
+        self.mapView.setRegion(region, animated: true)
     }
     
     
@@ -159,13 +183,34 @@ extension ServiceLocationViewController: MKMapViewDelegate {
     
 }
 extension ServiceLocationViewController: HandleMapSearch {
-    func dropPinZoomIn(placemark:MKPlacemark){
-        // cache the pin
-    UIView.animate(withDuration: 1.5, animations: { () -> Void in
-       let center = CLLocationCoordinate2D(latitude: placemark.coordinate.latitude, longitude: placemark.coordinate.longitude )
-        let region = MKCoordinateRegion(center: center, span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01))
-        
-        self.mapView.setRegion(region, animated: true)
-    })
-}
-}
+    func dropPinZoomIn(placemark: MKAnnotation) {
+        let center = CLLocationCoordinate2D(latitude: placemark.coordinate.latitude, longitude: placemark.coordinate.longitude )
+               let region = MKCoordinateRegion(center: center, span: MKCoordinateSpan(latitudeDelta: 0.001, longitudeDelta: 0.001))
+               
+               self.mapView.setRegion(region, animated: true)
+       
+               
+           }
+    }
+    
+    
+
+
+// TODO - uncomment this to implement the search bar and get user gps location
+//extension ViewController : CLLocationManagerDelegate {
+//    func locationManager(manager: CLLocationManager, didChangeAuthorizationStatus status: CLAuthorizationStatus) {
+//        if status == .authorizedWhenInUse {
+//            locationManager.requestLocation()
+//        }
+//    }
+//
+//    func locationManager(manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+//        if let location = locations.first {
+//            print("location:: (location)")
+//        }
+//    }
+//
+//    func locationManager(manager: CLLocationManager, didFailWithError error: NSError) {
+//        print("error:: (error)")
+//    }
+//}
